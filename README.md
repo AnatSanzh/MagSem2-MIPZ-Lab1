@@ -75,6 +75,7 @@ Netherlands 2
 ## How to run
 
 In order to run program, just clone this repo and open `MagSem2_MIPZ_Lab1.sln` inside this folder using Visual Studio.
+Then open menu `Debug` and click `Start Without Debugging`
 
 ## Author
 Sanzharovksyi Anatolii, student of group KP-11mn
