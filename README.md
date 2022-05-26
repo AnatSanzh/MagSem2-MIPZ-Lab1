@@ -1,5 +1,4 @@
-# Magister program semester 2 - Software engeneering methodology - lab 1
-# Euro diffusion
+# Magister program semester 2 - Software engeneering methodology - Lab 1(Euro diffusion)
 
 On January 1, 2002, twelve European countries abandoned their national currency for a new currency, the euro. No more 
 francs, marks, lires, guldens, kroner,... only euros, all over the eurozone. The same banknotes are used in all 
