@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace MagSem2_MIPZ_Lab1
 {
@@ -7,6 +6,13 @@ namespace MagSem2_MIPZ_Lab1
     {
         const int INITIAL_COUNTRY_COIN_COUNT = 1000000;
         const int REPRESENTATIVE_PORTION_DIVIDER = 1000;
+
+        const int MIN_AREA_COORD = 1;
+        const int MAX_AREA_COORD = 10;
+        const int MAX_NAME_LENGTH = 25;
+        const int MAX_COUNTRY_COUNT = 20;
+
+        static readonly (int dX, int dY)[] CELL_SIDES = new[] { (1,0), (-1,0), (0,1), (0,-1) };
 
         public struct CountryResult
         {
@@ -136,28 +142,18 @@ namespace MagSem2_MIPZ_Lab1
                                     continue;
                                 }
 
-                                if (xI > 0 && currWorld[yI, xI - 1].Coins != null)
+                                for (int sI = 0; sI < CELL_SIDES.Length; sI++)
                                 {
-                                    nextWorld[yI, xI - 1].Coins[cI] += reprPortion;
-                                    NWcurrCityCoins[cI] -= reprPortion;
-                                }
+                                    var newXI = CELL_SIDES[sI].dX + xI;
+                                    var newYI = CELL_SIDES[sI].dY + yI;
 
-                                if (yI > 0 && currWorld[yI - 1, xI].Coins != null)
-                                {
-                                    nextWorld[yI - 1, xI].Coins[cI] += reprPortion;
-                                    NWcurrCityCoins[cI] -= reprPortion;
-                                }
-
-                                if (xI < globalWidth - 1 && currWorld[yI, xI + 1].Coins != null)
-                                {
-                                    nextWorld[yI, xI + 1].Coins[cI] += reprPortion;
-                                    NWcurrCityCoins[cI] -= reprPortion;
-                                }
-
-                                if (yI < globalHeight - 1 && currWorld[yI + 1, xI].Coins != null)
-                                {
-                                    nextWorld[yI + 1, xI].Coins[cI] += reprPortion;
-                                    NWcurrCityCoins[cI] -= reprPortion;
+                                    if (newXI >= 0 && newXI < globalWidth &&
+                                        newYI >= 0 && newYI < globalHeight &&
+                                        currWorld[newYI, newXI].Coins != null)
+                                    {
+                                        nextWorld[newYI, newXI].Coins[cI] += reprPortion;
+                                        NWcurrCityCoins[cI] -= reprPortion;
+                                    }
                                 }
                             }
                         }
@@ -175,18 +171,18 @@ namespace MagSem2_MIPZ_Lab1
 
         public static bool IsInputValid(List<CountrySettings> countrySettings)
         {
-            if (countrySettings.Count > 20)
+            if (countrySettings.Count > MAX_COUNTRY_COUNT)
                 return false;
 
             for (int i = 0; i < countrySettings.Count; i++)
             {
                 var currSetting = countrySettings[i];
 
-                if (currSetting.Name.Length > 25 ||
-                    currSetting.OccupiedArea.MinY < 1 || currSetting.OccupiedArea.MinY > 10 ||
-                    currSetting.OccupiedArea.MinX < 1 || currSetting.OccupiedArea.MinX > 10 ||
-                    currSetting.OccupiedArea.MaxY < 1 || currSetting.OccupiedArea.MaxY > 10 ||
-                    currSetting.OccupiedArea.MaxX < 1 || currSetting.OccupiedArea.MaxX > 10)
+                if (currSetting.Name.Length > MAX_NAME_LENGTH ||
+                    currSetting.OccupiedArea.MinY < MIN_AREA_COORD || currSetting.OccupiedArea.MinY > MAX_AREA_COORD ||
+                    currSetting.OccupiedArea.MinX < MIN_AREA_COORD || currSetting.OccupiedArea.MinX > MAX_AREA_COORD ||
+                    currSetting.OccupiedArea.MaxY < MIN_AREA_COORD || currSetting.OccupiedArea.MaxY > MAX_AREA_COORD ||
+                    currSetting.OccupiedArea.MaxX < MIN_AREA_COORD || currSetting.OccupiedArea.MaxX > MAX_AREA_COORD)
                     return false;
             }
 
