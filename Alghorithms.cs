@@ -27,46 +27,23 @@ namespace MagSem2_MIPZ_Lab1
 
         public static List<CountryResult> SimulateEurodiffusion(List<CountrySettings> countrySettings)
         {
-            if (IsInputValid(countrySettings) || !IsCountrySettingsValid(countrySettings))
+            if (!CheckCSInput(countrySettings))
             {
                 return null;
             }
 
-            Rect globalBoundingRect = countrySettings[0].OccupiedArea;
-            for (int i = 1; i < countrySettings.Count; i++)
-            {
-                globalBoundingRect = Rect.GetBoundingRect(globalBoundingRect, countrySettings[i].OccupiedArea);
-            }
+            Rect globalBoundingRect = GetGlobalBoundingRect(countrySettings);
+
             int globalHeight = globalBoundingRect.Height + 1;
             int globalWidth = globalBoundingRect.Width + 1;
 
             // init world grid
             CityState[,] currWorld = new CityState[globalHeight, globalWidth],
                 nextWorld = new CityState[globalHeight, globalWidth];
-            for (int i = 0; i < countrySettings.Count; i++)
-            {
-                int startX = countrySettings[i].OccupiedArea.MinX - globalBoundingRect.MinX;
-                int startY = countrySettings[i].OccupiedArea.MinY - globalBoundingRect.MinY;
-                int endX = countrySettings[i].OccupiedArea.MaxX - globalBoundingRect.MinX;
-                int endY = countrySettings[i].OccupiedArea.MaxY - globalBoundingRect.MinY;
-
-                for (int yI = startY; yI <= endY; yI++)
-                {
-                    for (int xI = startX; xI <= endX; xI++)
-                    {
-                        currWorld[yI, xI].Coins = new int[countrySettings.Count];
-                        nextWorld[yI, xI].Coins = new int[countrySettings.Count];
-
-                        currWorld[yI, xI].Coins[i] = INITIAL_COUNTRY_COIN_COUNT;
-                    }
-                }
-            }
+            InitWorld(countrySettings, globalBoundingRect, ref currWorld, ref nextWorld);
 
             List<int> uncompletedCountries = new List<int>(countrySettings.Count);
-            for (int i = 0; i < countrySettings.Count; i++)
-            {
-                uncompletedCountries.Add(i);
-            }
+            InitUncompletedCountriesList(countrySettings, ref uncompletedCountries);
 
             List<CountryResult> results = new List<CountryResult>(countrySettings.Count);
 
@@ -79,27 +56,7 @@ namespace MagSem2_MIPZ_Lab1
                     var currCountryIndex = uncompletedCountries[i];
                     var currCountryArea = countrySettings[currCountryIndex].OccupiedArea;
 
-                    var startX = currCountryArea.MinX - globalBoundingRect.MinX;
-                    var startY = currCountryArea.MinY - globalBoundingRect.MinY;
-                    var endX = currCountryArea.MaxX - globalBoundingRect.MinX;
-                    var endY = currCountryArea.MaxY - globalBoundingRect.MinY;
-
-                    bool isCompleted = true;
-
-                    for (int yI = startY; yI <= endY && isCompleted; yI++)
-                    {
-                        for (int xI = startX; xI <= endX && isCompleted; xI++)
-                        {
-                            var currCity = currWorld[yI, xI];
-
-                            for (int cI = 0; cI < currCity.Coins.Length && isCompleted; cI++)
-                            {
-                                isCompleted &= currCity.Coins[cI] > 0;
-                            }
-                        }
-                    }
-
-                    if (isCompleted)
+                    if (IsCountryAreaCompleted(currCountryArea, globalBoundingRect, ref currWorld))
                     {
                         uncompletedCountries.RemoveAt(i);
                         results.Add(new CountryResult() { Index = currCountryIndex, IterationCount = worldIteration });
@@ -169,27 +126,94 @@ namespace MagSem2_MIPZ_Lab1
             return results;
         }
 
-        public static bool IsInputValid(List<CountrySettings> countrySettings)
+        static Rect GetGlobalBoundingRect(List<CountrySettings> countrySettings)
+        {
+            Rect globalBoundingRect = countrySettings[0].OccupiedArea;
+            for (int i = 1; i < countrySettings.Count; i++)
+            {
+                globalBoundingRect = Rect.GetBoundingRect(globalBoundingRect, countrySettings[i].OccupiedArea);
+            }
+            return globalBoundingRect;
+        }
+
+        static void InitWorld(List<CountrySettings> countrySettings, Rect globalBoundingRect, ref CityState[,] currentWorld, ref CityState[,] nextWorld)
+        {
+            for (int i = 0; i < countrySettings.Count; i++)
+            {
+                int startX = countrySettings[i].OccupiedArea.MinX - globalBoundingRect.MinX;
+                int startY = countrySettings[i].OccupiedArea.MinY - globalBoundingRect.MinY;
+                int endX = countrySettings[i].OccupiedArea.MaxX - globalBoundingRect.MinX;
+                int endY = countrySettings[i].OccupiedArea.MaxY - globalBoundingRect.MinY;
+
+                for (int yI = startY; yI <= endY; yI++)
+                {
+                    for (int xI = startX; xI <= endX; xI++)
+                    {
+                        currentWorld[yI, xI].Coins = new int[countrySettings.Count];
+                        nextWorld[yI, xI].Coins = new int[countrySettings.Count];
+
+                        currentWorld[yI, xI].Coins[i] = INITIAL_COUNTRY_COIN_COUNT;
+                    }
+                }
+            }
+        }
+
+        static void InitUncompletedCountriesList(List<CountrySettings> countrySettings, ref List<int> uncompletedCountryList)
+        {
+            for (int i = 0; i < countrySettings.Count; i++)
+            {
+                uncompletedCountryList.Add(i);
+            }
+        }
+
+        static bool IsCountryAreaCompleted(Rect currCountryArea, Rect globalBoundingRect, ref CityState[,] currentWorld)
+        {
+            var startX = currCountryArea.MinX - globalBoundingRect.MinX;
+            var startY = currCountryArea.MinY - globalBoundingRect.MinY;
+            var endX = currCountryArea.MaxX - globalBoundingRect.MinX;
+            var endY = currCountryArea.MaxY - globalBoundingRect.MinY;
+
+
+            for (int yI = startY; yI <= endY; yI++)
+            {
+                for (int xI = startX; xI <= endX; xI++)
+                {
+                    var currCity = currentWorld[yI, xI];
+
+                    for (int cI = 0; cI < currCity.Coins.Length; cI++)
+                    {
+                        if(currCity.Coins[cI] == 0)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        static bool IsInputValid(List<CountrySettings> countrySettings)
         {
             if (countrySettings.Count > MAX_COUNTRY_COUNT)
                 return false;
 
             for (int i = 0; i < countrySettings.Count; i++)
             {
-                var currSetting = countrySettings[i];
-
-                if (currSetting.Name.Length > MAX_NAME_LENGTH ||
-                    currSetting.OccupiedArea.MinY < MIN_AREA_COORD || currSetting.OccupiedArea.MinY > MAX_AREA_COORD ||
-                    currSetting.OccupiedArea.MinX < MIN_AREA_COORD || currSetting.OccupiedArea.MinX > MAX_AREA_COORD ||
-                    currSetting.OccupiedArea.MaxY < MIN_AREA_COORD || currSetting.OccupiedArea.MaxY > MAX_AREA_COORD ||
-                    currSetting.OccupiedArea.MaxX < MIN_AREA_COORD || currSetting.OccupiedArea.MaxX > MAX_AREA_COORD)
+                if (CheckIndividualCountrySetting(countrySettings[i]))
                     return false;
             }
 
             return true;
         }
 
-        public static bool IsCountrySettingsValid(List<CountrySettings> countrySettings)
+        static bool CheckIndividualCountrySetting(CountrySettings countrySetting) => countrySetting.Name.Length > MAX_NAME_LENGTH ||
+                    countrySetting.OccupiedArea.MinY < MIN_AREA_COORD || countrySetting.OccupiedArea.MinY > MAX_AREA_COORD ||
+                    countrySetting.OccupiedArea.MinX < MIN_AREA_COORD || countrySetting.OccupiedArea.MinX > MAX_AREA_COORD ||
+                    countrySetting.OccupiedArea.MaxY < MIN_AREA_COORD || countrySetting.OccupiedArea.MaxY > MAX_AREA_COORD ||
+                    countrySetting.OccupiedArea.MaxX < MIN_AREA_COORD || countrySetting.OccupiedArea.MaxX > MAX_AREA_COORD;
+
+        static bool IsCountrySettingsValid(List<CountrySettings> countrySettings)
         {
             var graph = new Dictionary<int, HashSet<int>>();
             for (int i = 0; i < countrySettings.Count; i++)
@@ -227,5 +251,10 @@ namespace MagSem2_MIPZ_Lab1
 
             return visitedCountries.Count == countrySettings.Count;
         }
+
+        static bool CheckCSInput(List<CountrySettings> countrySettings) =>
+            IsInputValid(countrySettings) && IsCountrySettingsValid(countrySettings);
+
+
     }
 }

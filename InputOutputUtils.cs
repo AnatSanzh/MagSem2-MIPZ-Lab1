@@ -21,29 +21,32 @@ namespace MagSem2_MIPZ_Lab1
                 }
 
                 var countrySet = new List<CountrySettings>();
-
-                for (int j = 0; j < currSetCountryCount; j++)
-                {
-                    var segments = reader.ReadLine().Split(' ', StringSplitOptions.RemoveEmptyEntries
-                        | StringSplitOptions.TrimEntries);
-
-                    countrySet.Add(new CountrySettings()
-                    {
-                        Name = segments[0],
-                        OccupiedArea = new Rect()
-                        {
-                            MinX = int.Parse(segments[1]),
-                            MinY = int.Parse(segments[2]),
-                            MaxX = int.Parse(segments[3]),
-                            MaxY = int.Parse(segments[4])
-                        }
-                    });
-                }
-
+                ReadSetCountrySettings(reader, ref countrySet, currSetCountryCount);
                 result.Add(countrySet);
             }
 
             return result;
+        }
+
+        static void ReadSetCountrySettings(TextReader reader, ref List<CountrySettings> countrySet, int countryCount)
+        {
+            for (int j = 0; j < countryCount; j++)
+            {
+                var segments = reader.ReadLine().Split(' ', StringSplitOptions.RemoveEmptyEntries
+                    | StringSplitOptions.TrimEntries);
+
+                countrySet.Add(new CountrySettings()
+                {
+                    Name = segments[0],
+                    OccupiedArea = new Rect()
+                    {
+                        MinX = int.Parse(segments[1]),
+                        MinY = int.Parse(segments[2]),
+                        MaxX = int.Parse(segments[3]),
+                        MaxY = int.Parse(segments[4])
+                    }
+                });
+            }
         }
 
         public static void OutputResults(TextWriter writer, List<List<CountrySettings>> settings,
@@ -51,28 +54,30 @@ namespace MagSem2_MIPZ_Lab1
         {
             for (int i = 0; i < results.Count; i++)
             {
-                var currResult = results[i];
-
-                if (currResult == null)
+                if (results[i] == null)
                 {
                     writer.WriteLine($"Case Number {i + 1} contains invalid input!");
                 }
                 else
                 {
-                    var currCountrySet = settings[i];
-                    currResult.Sort(delegate (Alghorithms.CountryResult a, Alghorithms.CountryResult b)
-                    {
-                        if (a.IterationCount == b.IterationCount)
-                            return currCountrySet[a.Index].Name.CompareTo(currCountrySet[b.Index].Name);
-                        return a.IterationCount.CompareTo(b.IterationCount);
-                    });
-
-                    writer.WriteLine($"Case Number {i + 1}");
-                    for (int j = 0; j < currResult.Count; j++)
-                    {
-                        writer.WriteLine($"{currCountrySet[currResult[j].Index].Name} {currResult[j].IterationCount}");
-                    }
+                    OutputSetResults(i, writer, settings[i], results[i]);
                 }
+            }
+        }
+
+        static void OutputSetResults(int iteration, TextWriter writer, List<CountrySettings> setSettings, List<Alghorithms.CountryResult> setResults)
+        {
+            setResults.Sort(delegate (Alghorithms.CountryResult a, Alghorithms.CountryResult b)
+            {
+                if (a.IterationCount == b.IterationCount)
+                    return setSettings[a.Index].Name.CompareTo(setSettings[b.Index].Name);
+                return a.IterationCount.CompareTo(b.IterationCount);
+            });
+
+            writer.WriteLine($"Case Number {iteration + 1}");
+            for (int j = 0; j < setResults.Count; j++)
+            {
+                writer.WriteLine($"{setSettings[setResults[j].Index].Name} {setResults[j].IterationCount}");
             }
         }
     }
